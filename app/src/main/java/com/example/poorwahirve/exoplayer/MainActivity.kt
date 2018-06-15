@@ -5,6 +5,8 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import com.example.poorwahirve.exoplayer.R.id.progressBar
+import com.example.poorwahirve.exoplayer.R.id.simpleExoPlayerView
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
 import com.google.android.exoplayer2.source.ExtractorMediaSource
@@ -26,7 +28,7 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
     private lateinit var simpleExoPlayer: SimpleExoPlayer
     private var playbackPosition = 0L
     private val dashUrl = "http://rdmedia.bbc.co.uk/dash/ondemand/bbb/2/client_manifest-separate_init.mpd"
-    private val mp4Url = "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4"
+    private val mp4Url = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
 //    private val bandwidthMeter = DefaultBandwidthMeter()
 
     private val bandwidthMeter by lazy {
@@ -35,7 +37,7 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
     private val adaptiveTrackSelectionFactory by lazy {
         AdaptiveTrackSelection.Factory(bandwidthMeter)
     }
-    
+
     // helper method to create the media source
     private fun buildMediaSource(uri: Uri): MediaSource {
         val dataSourceFactory = DefaultDataSourceFactory(this,"ua", bandwidthMeter)
@@ -66,7 +68,7 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
 
         simpleExoPlayerView.player = simpleExoPlayer
         simpleExoPlayer.seekTo(playbackPosition)
-        simpleExoPlayer.playWhenReady = true
+        simpleExoPlayer.playWhenReady = false
         simpleExoPlayer.addListener(this)
     }
 

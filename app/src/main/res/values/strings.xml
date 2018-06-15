@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">ExoPlayer</string>
+    <string name="exo_controls_shuffle_description">Shuffle</string>
     <string name="lipsum_text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque sagittis augue diam, in consectetur lorem ullamcorper vitae. Morbi malesuada elit eget nulla gravida hendrerit. Etiam sagittis sollicitudin mauris, in maximus odio consectetur eget. Duis auctor a nisi vitae cursus. Morbi congue neque sit amet massa interdum lacinia. Aliquam cursus nunc non nisl efficitur feugiat. Duis feugiat vel felis non laoreet. Sed porttitor eget eros sit amet porttitor.
 
 Mauris porttitor elit sit amet turpis lobortis, eget rutrum leo porttitor. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer id blandit ex. Integer facilisis et purus et porta. Proin laoreet arcu quis neque vulputate dictum. Nulla commodo tortor semper, sodales nisi nec, luctus dui. Ut dictum massa eu nisi bibendum, at malesuada orci venenatis. Integer sed euismod massa. Sed venenatis diam vitae sem aliquet, eget sollicitudin neque sodales. Nam ullamcorper felis neque, non tristique est laoreet id.

@@ -8,4 +8,14 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="ExoMediaButton.Shuffle">
+        <item name="android:src">@drawable/ic_launcher_foreground</item>
+        <item name="android:contentDescription">@string/exo_controls_shuffle_description</item>
+    </style>
+
+    <style name="ExoMediaButton.MediaButton">
+        <item name="android:src">@drawable/ic_launcher_foreground</item>
+        <item name="android:contentDescription">@string/exo_controls_shuffle_description</item>
+    </style>
+
 </resources>
