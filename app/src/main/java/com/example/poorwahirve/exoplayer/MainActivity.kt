@@ -1,10 +1,17 @@
 package com.example.poorwahirve.exoplayer
 
+import android.app.Dialog
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v4.content.ContextCompat
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageButton
+import android.widget.ImageView
+import com.example.poorwahirve.exoplayer.R.drawable.ic_fullscreen_expand
+import com.example.poorwahirve.exoplayer.R.drawable.ic_fullscreen_skrink
 import com.example.poorwahirve.exoplayer.R.id.progressBar
 import com.example.poorwahirve.exoplayer.R.id.simpleExoPlayerView
 import com.google.android.exoplayer2.*
@@ -21,7 +28,13 @@ import com.google.android.exoplayer2.upstream.*
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.exo_playback_control_view.*
 import java.text.ParsePosition
+import com.google.android.exoplayer2.ui.PlaybackControlView
+
+
+
+
 
 class MainActivity : AppCompatActivity(), Player.EventListener {
 
@@ -29,7 +42,60 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
     private var playbackPosition = 0L
     private val dashUrl = "http://rdmedia.bbc.co.uk/dash/ondemand/bbb/2/client_manifest-separate_init.mpd"
     private val mp4Url = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+    private lateinit var fullScreenDialog : Dialog
+    private var fullScreen = false
 //    private val bandwidthMeter = DefaultBandwidthMeter()
+
+    private fun initFullScreenDialog() {
+        fullScreenDialog = Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+        val dialogObservable : Observable<Dialog> = Observable
+                .just(fullScreenDialog)
+                .doOnNext {
+                     it.onBackPressed().takeIf { fullScreen }
+                }
+        dialogObservable.subscribe()
+
+    }
+
+    private fun openFullScreenDialog() {
+
+        (simpleExoPlayerView.parent as ViewGroup).removeView(simpleExoPlayerView)
+        fullScreenDialog.addContentView(simpleExoPlayerView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        exo_fullscreen_icon.setImageDrawable(getDrawable(ic_fullscreen_skrink))
+        fullScreen = true
+        fullScreenDialog.show()
+
+    }
+
+    private fun closeFullScreenDialog() {
+
+        (simpleExoPlayerView.parent as ViewGroup).removeView(simpleExoPlayerView)
+        mainFrameLayout.addView(simpleExoPlayerView)
+        fullScreen = false
+        fullScreenDialog.dismiss()
+        exo_fullscreen_icon.setImageDrawable(getDrawable(ic_fullscreen_expand))
+
+    }
+
+    private fun initFullScreenButton() {
+
+
+        val fullScreenIconObservable : Observable<ImageView> = Observable
+                .just(exo_fullscreen_icon)
+                .doOnNext {
+                    it.setOnClickListener {
+                    if(fullScreen)
+                        closeFullScreenDialog()
+                    else
+                        openFullScreenDialog()
+                    }
+                }
+
+        fullScreenIconObservable.subscribe()
+
+    }
+
+
 
     private val bandwidthMeter by lazy {
         DefaultBandwidthMeter()
@@ -68,7 +134,7 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
 
         simpleExoPlayerView.player = simpleExoPlayer
         simpleExoPlayer.seekTo(playbackPosition)
-        simpleExoPlayer.playWhenReady = false
+        simpleExoPlayer.playWhenReady = true
         simpleExoPlayer.addListener(this)
     }
 
@@ -92,7 +158,8 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
         setContentView(R.layout.activity_main)
 
 //        Log.e("playbackPositionType", (playbackPosition is Long).toString())
-
+        initFullScreenDialog();
+        initFullScreenButton();
         initializeExoPlayer()
         val playbackPositionObservable : Observable<Long> = Observable
                 .just(playbackPosition)
