@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
+import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.source.dash.DashMediaSource
@@ -13,9 +15,7 @@ import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
+import com.google.android.exoplayer2.upstream.*
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import kotlinx.android.synthetic.main.activity_main.*
@@ -25,7 +25,9 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
 
     private lateinit var simpleExoPlayer: SimpleExoPlayer
     private var playbackPosition = 0L
-    private val dashUrl = "http://rdmedia.bbc.co.uk/dash/ondemand/bbb/2/client_manifest-separate_init.mpd" 
+    private val dashUrl = "http://rdmedia.bbc.co.uk/dash/ondemand/bbb/2/client_manifest-separate_init.mpd"
+    private val mp4Url = "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4"
+//    private val bandwidthMeter = DefaultBandwidthMeter()
 
     private val bandwidthMeter by lazy {
         DefaultBandwidthMeter()
@@ -33,30 +35,35 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
     private val adaptiveTrackSelectionFactory by lazy {
         AdaptiveTrackSelection.Factory(bandwidthMeter)
     }
-
+    
     // helper method to create the media source
     private fun buildMediaSource(uri: Uri): MediaSource {
-        val dataSourceFactory = DefaultHttpDataSourceFactory("ua", bandwidthMeter)
+        val dataSourceFactory = DefaultDataSourceFactory(this,"ua", bandwidthMeter)
         val dashChunkSourceFactory = DefaultDashChunkSource.Factory(dataSourceFactory)
-        return DashMediaSource(uri, dataSourceFactory, dashChunkSourceFactory, null, null)
+        val extractorsFactory = DefaultExtractorsFactory()
+        return ExtractorMediaSource(uri, dataSourceFactory, extractorsFactory, null, null)
     }
 
     // prepare the exoplayer
     private fun prepareExoPlayer() {
-        val uri = Uri.parse(dashUrl)
+        val uri = Uri.parse(mp4Url)
         val videoSource = buildMediaSource(uri)
         simpleExoPlayer.prepare(videoSource)
     }
 
     // init exoplayer
     private fun initializeExoPlayer() {
+
+        val videoTrackSelectionFactory = AdaptiveTrackSelection.Factory(DefaultBandwidthMeter())
+        val trackSelector = DefaultTrackSelector(videoTrackSelectionFactory)
         simpleExoPlayer = ExoPlayerFactory.newSimpleInstance(
-                DefaultRenderersFactory(this),
-                DefaultTrackSelector(adaptiveTrackSelectionFactory),
+                this,
+                trackSelector,
                 DefaultLoadControl()
         )
 
         prepareExoPlayer()
+
         simpleExoPlayerView.player = simpleExoPlayer
         simpleExoPlayer.seekTo(playbackPosition)
         simpleExoPlayer.playWhenReady = true
