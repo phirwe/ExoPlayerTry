@@ -19,8 +19,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="ExoPlayer FullScreen"
-                android:textSize="@android:dimen/notification_large_icon_height"
+                android:id="@+id/videoTypeTitle"
+                android:textSize="20dp"
                 android:textColor="@color/colorPrimaryDark"/>
 
             <FrameLayout

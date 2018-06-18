@@ -21,6 +21,7 @@ import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.TrackGroupArray
 import com.google.android.exoplayer2.source.dash.DashMediaSource
 import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
+import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray
@@ -31,8 +32,10 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.exo_playback_control_view.*
 import java.text.ParsePosition
 import com.google.android.exoplayer2.ui.PlaybackControlView
+import io.reactivex.schedulers.Timed
 import java.lang.Math.random
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity(), Player.EventListener {
@@ -40,13 +43,14 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
     private lateinit var simpleExoPlayer: SimpleExoPlayer
     private var playbackPosition = 0L
     private val dashUrl = "http://rdmedia.bbc.co.uk/dash/ondemand/bbb/2/client_manifest-separate_init.mpd"
+    private val hlsUrl = "http://esioslive6-i.akamaihd.net/hls/live/202892/AL_P_ESP1_FR_FRA/playlist.m3u8"
     private val mp4Url = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+    private var duration = 0L
 
-    private val urlArray : Array<String> = arrayOf(dashUrl, mp4Url)
+    private val urlArray : Array<String> = arrayOf(dashUrl, mp4Url, hlsUrl)
 
     private lateinit var fullScreenDialog : Dialog
     private var fullScreen = false
-//    private val bandwidthMeter = DefaultBandwidthMeter()
 
     private fun initFullScreenDialog() {
         fullScreenDialog = Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
@@ -81,7 +85,6 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
 
     private fun initFullScreenButton() {
 
-
         val fullScreenIconObservable : Observable<ImageView> = Observable
                 .just(exo_fullscreen_icon)
                 .doOnNext {
@@ -107,17 +110,22 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
     }
 
     // helper method to create the media source
-    private fun buildMediaSource(uri: String): MediaSource {
+    private fun buildMediaSource(uri: String, extension: String): MediaSource {
         val uriParsed = Uri.parse(uri)
 
-        if ( (uri as CharSequence).contains(".mpd", false) ) {
+        if ( extension.contains(".mpd", false) ) {
             val dataSourceFactory = DefaultHttpDataSourceFactory("ua", bandwidthMeter)
             val dashChunkSourceFactory = DefaultDashChunkSource.Factory(dataSourceFactory)
             return DashMediaSource(uriParsed, dataSourceFactory, dashChunkSourceFactory, null, null)
         }
 
+        if ( extension.contains(".m3u8", false) ) {
+            val dataSourceFactory = DefaultHttpDataSourceFactory("ua", bandwidthMeter)
+            return HlsMediaSource(uriParsed,
+                    dataSourceFactory, null, null)
+        }
+
         val dataSourceFactory = DefaultDataSourceFactory(this,"ua", bandwidthMeter)
-        val dashChunkSourceFactory = DefaultDashChunkSource.Factory(dataSourceFactory)
         val extractorsFactory = DefaultExtractorsFactory()
         return ExtractorMediaSource(uriParsed, dataSourceFactory, extractorsFactory, null, null)
     }
@@ -125,8 +133,10 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
     // prepare the exoplayer
     private fun prepareExoPlayer() {
         val uri = urlArray[(0..urlArray.size).random()]
-        Log.e("URL", uri)
-        val videoSource = buildMediaSource(uri)
+        val extension = uri.substring(uri.lastIndexOf("."), uri.length)
+        videoTypeTitle.text = "Video Type: " + extension
+        Log.e("Ext", extension)
+        val videoSource = buildMediaSource(uri, extension)
         simpleExoPlayer.prepare(videoSource)
     }
 
@@ -157,8 +167,11 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
 
     override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
 
-        if (playbackState == Player.STATE_READY)  // video loaded, hide progress bar
+        if (playbackState == Player.STATE_READY) { // video loaded, hide progress bar
+            duration = simpleExoPlayer.duration
             progressBar.visibility = View.INVISIBLE
+
+        }
         else if (playbackState == Player.STATE_BUFFERING)
             progressBar.visibility = View.VISIBLE
 
@@ -168,7 +181,6 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-//        Log.e("playbackPositionType", (playbackPosition is Long).toString())
         initFullScreenDialog();
         initFullScreenButton();
         initializeExoPlayer()
@@ -181,7 +193,17 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
 
         playbackPositionObservable.subscribe()
 
+        val timelineObservable : Observable<Timed<Long>> = Observable
+                .interval(1500, TimeUnit.MILLISECONDS).timeInterval()
+                .doOnEach {
+                    if (simpleExoPlayer.currentPosition > duration / 2)
+                        Log.e("time", simpleExoPlayer.currentPosition.toString())
+                }
+
+        timelineObservable.subscribe()
+
     }
+
 
 //    override fun onStart() {
 //        super.onStart()
@@ -219,7 +241,7 @@ class MainActivity : AppCompatActivity(), Player.EventListener {
     }
 
     override fun onTimelineChanged(timeline: Timeline?, manifest: Any?) {
-        
+
     }
 
     fun ClosedRange<Int>.random() =
